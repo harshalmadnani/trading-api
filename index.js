@@ -24,11 +24,20 @@ app.use(bodyParser.json());
 // Endpoint to create a new scheduled Lambda function
 app.post('/create-scheduled-lambda', async (req, res) => {
   try {
-    const { code, interval, functionName, env } = req.body;
+    const { code, interval, functionName, env, PRIVATE_KEY, PUBLIC_KEY } = req.body;
 
     if (!code || !interval || !functionName) {
       return res.status(400).json({ error: 'Missing required parameters' });
     }
+
+    // Prepare environment variables
+    const environmentVariables = {
+      OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+      API_KEY: process.env.API_KEY,
+      ...(env || {}),
+      ...(PRIVATE_KEY ? { PRIVATE_KEY } : {}),
+      ...(PUBLIC_KEY ? { PUBLIC_KEY } : {})
+    };
 
     // Create the Lambda function code
     const functionCode = `
@@ -64,7 +73,7 @@ exports.handler = async (event) => {
       Timeout: 600, // 10 minutes in seconds
       MemorySize: 128,
       Environment: {
-        Variables: env || {}
+        Variables: environmentVariables
       }
     };
 

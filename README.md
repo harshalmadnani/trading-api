@@ -43,7 +43,10 @@ npm start
 {
   "functionName": "my-scheduled-function",
   "code": "console.log('Hello World!');",
-  "interval": "rate(5 minutes)"
+  "interval": "rate(5 minutes)",
+  "env": {
+    "MY_ENV_VAR": "some_value"
+  }
 }
 ```
 
@@ -51,6 +54,31 @@ npm start
 - `functionName`: Unique name for your Lambda function
 - `code`: JavaScript code to be executed by the Lambda function
 - `interval`: AWS EventBridge schedule expression (e.g., "rate(5 minutes)", "cron(0 12 * * ? *)")
+- `env` (optional): Object containing environment variables to set in the Lambda function
+
+**Example cURL Request:**
+```sh
+curl -X POST http://localhost:3010/create-scheduled-lambda \
+  -H "Content-Type: application/json" \
+  -d '{
+    "code": "console.log(\"ENV TEST\", process.env.TEST_VAR);",
+    "interval": "rate(5 minutes)",
+    "functionName": "testEnvLambda",
+    "env": {
+      "TEST_VAR": "hello_env"
+    }
+  }'
+```
+
+## Testing and Verifying Environment Variables
+
+1. After creating the Lambda, go to the AWS Lambda Console and find your function (e.g., `testEnvLambda`).
+2. Use the AWS Console to invoke the function manually, or wait for the scheduled event.
+3. Check the function's logs in CloudWatch (Monitor > View logs in CloudWatch) for output like:
+   ```
+   ENV TEST hello_env
+   ```
+This confirms that the environment variable was set correctly.
 
 **Response:**
 ```json

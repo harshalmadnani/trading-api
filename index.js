@@ -24,7 +24,7 @@ app.use(bodyParser.json());
 // Endpoint to create a new scheduled Lambda function
 app.post('/create-scheduled-lambda', async (req, res) => {
   try {
-    const { code, interval, functionName } = req.body;
+    const { code, interval, functionName, env } = req.body;
 
     if (!code || !interval || !functionName) {
       return res.status(400).json({ error: 'Missing required parameters' });
@@ -62,7 +62,10 @@ exports.handler = async (event) => {
         ZipFile: zipBuffer
       },
       Timeout: 600, // 10 minutes in seconds
-      MemorySize: 128
+      MemorySize: 128,
+      Environment: {
+        Variables: env || {}
+      }
     };
 
     const lambdaFunction = await lambda.createFunction(lambdaParams).promise();

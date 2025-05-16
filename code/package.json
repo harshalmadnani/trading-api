@@ -7,8 +7,8 @@
     "start": "node baseline.js"
   },
   "dependencies": {
+    "@kadena/client": "^1.17.1",
     "@kadena/cryptography-utils": "^0.1.0",
-    "@kadena/client": "^1.0.0",
     "dotenv": "^16.3.1"
   }
-} 
+}

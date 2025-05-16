@@ -44,18 +44,32 @@ app.post('/create-scheduled-lambda', async (req, res) => {
     // Create a zip file containing the Lambda function code
     const zip = new AdmZip();
     const codeFolderPath = path.join(__dirname, 'code');
-    const files = fs.readdirSync(codeFolderPath);
-    for (const file of files) {
-      const filePath = path.join(codeFolderPath, file);
-      let fileContent = fs.readFileSync(filePath);
-      if (file === 'baseline.js') {
-        // Replace {ai-code} in baseline.js
-        let baselineJsContent = fileContent.toString();
-        baselineJsContent = baselineJsContent.replace('{ai-code}', code);
-        fileContent = Buffer.from(baselineJsContent);
+    
+    function addFilesToZip(dirPath, zip) {
+      const files = fs.readdirSync(dirPath);
+      for (const file of files) {
+        const filePath = path.join(dirPath, file);
+        const stats = fs.statSync(filePath);
+        
+        if (stats.isDirectory()) {
+          // Recursively add files from subdirectories
+          addFilesToZip(filePath, zip);
+        } else {
+          // Add file to zip
+          let fileContent = fs.readFileSync(filePath);
+          if (file === 'baseline.js') {
+            // Replace {ai-code} in baseline.js
+            let baselineJsContent = fileContent.toString();
+            baselineJsContent = baselineJsContent.replace('{ai-code}', code);
+            fileContent = Buffer.from(baselineJsContent);
+          }
+          const relativePath = path.relative(__dirname, filePath);
+          zip.addFile(relativePath, fileContent);
+        }
       }
-      zip.addFile(`code/${file}`, fileContent);
     }
+
+    addFilesToZip(codeFolderPath, zip);
 
     // Create Lambda function
     const lambdaParams = {

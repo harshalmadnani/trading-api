@@ -1,0 +1,14 @@
+{
+  "name": "lambda-api-lambda",
+  "version": "1.0.0",
+  "description": "Kadena Lambda function code",
+  "main": "baseline.js",
+  "scripts": {
+    "start": "node baseline.js"
+  },
+  "dependencies": {
+    "@kadena/cryptography-utils": "^0.1.0",
+    "@kadena/client": "^1.0.0",
+    "dotenv": "^16.3.1"
+  }
+} 

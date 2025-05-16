@@ -1,6 +1,7 @@
-import { sign } from "@kadena/cryptography-utils";
-import { Pact, createClient } from "@kadena/client";
-import dotenv from "dotenv";
+const { sign } = require("@kadena/cryptography-utils");
+const { Pact } = require("@kadena/client");
+const { createClient } = require("@kadena/client");
+const dotenv = require("dotenv");
 
 // Custom error classes for better error handling
 class KadenaError extends Error {
@@ -39,11 +40,16 @@ dotenv.config();
 const API_BASE_URL = "https://kadena-agents.onrender.com";
 let API_KEY = process.env.API_KEY;
 
-export const chainId = "2";
-export const networkId = "mainnet01";
-export const rpcUrl = `https://api.chainweb.com/chainweb/0.0/${networkId}/chain/${chainId}/pact`;
+const chainId = "2";
+const networkId = "mainnet01";
+const rpcUrl = `https://api.chainweb.com/chainweb/0.0/${networkId}/chain/${chainId}/pact`;
 
-const client = createClient(rpcUrl);
+const client = createClient({
+  host: rpcUrl,
+  defaults: {
+    networkId: networkId,
+  },
+});
 
 // Constants
 const NETWORK_ID = "mainnet01";
@@ -631,7 +637,7 @@ async function getBalances(accountName, chainId = "2") {
  */
 {ai-code}
 
-export const handler = async (event, context) => {
+const handler = async (event, context) => {
   try {
     const result = await baselineFunction();
     return {

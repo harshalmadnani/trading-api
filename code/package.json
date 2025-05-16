@@ -9,6 +9,7 @@
   "dependencies": {
     "@kadena/client": "^1.17.1",
     "@kadena/cryptography-utils": "^0.1.0",
+    "@kadena/hd-wallet": "^0.6.1",
     "dotenv": "^16.3.1"
   }
 }

@@ -1,8 +1,6 @@
-const { sign } = require("@kadena/cryptography-utils");
-const { Pact } = require("@kadena/client");
-const { createClient } = require("@kadena/client");
-const dotenv = require("dotenv");
-
+import { Pact, createClient } from "@kadena/client";
+import dotenv from "dotenv";
+import { kadenaSignWithKeyPair } from "@kadena/hd-wallet";
 // Custom error classes for better error handling
 class KadenaError extends Error {
   constructor(message, code = "KADENA_ERROR", details = {}) {
@@ -40,16 +38,11 @@ dotenv.config();
 const API_BASE_URL = "https://kadena-agents.onrender.com";
 let API_KEY = process.env.API_KEY;
 
-const chainId = "2";
-const networkId = "mainnet01";
-const rpcUrl = `https://api.chainweb.com/chainweb/0.0/${networkId}/chain/${chainId}/pact`;
+export const chainId = "2";
+export const networkId = "mainnet01";
+export const rpcUrl = `https://api.chainweb.com/chainweb/0.0/${networkId}/chain/${chainId}/pact`;
 
-const client = createClient({
-  host: rpcUrl,
-  defaults: {
-    networkId: networkId,
-  },
-});
+const client = createClient(rpcUrl);
 
 // Constants
 const NETWORK_ID = "mainnet01";
@@ -302,23 +295,6 @@ async function getKeys() {
     const privateKey = process.env.PRIVATE_KEY;
     const publicKey = process.env.PUBLIC_KEY;
 
-    // Validate key formats
-    if (!/^[0-9a-f]{64}$/.test(privateKey)) {
-      throw new ValidationError("Invalid private key format", {
-        expectedFormat: "64 hex characters",
-        actualLength: privateKey.length,
-        suggestion: "Ensure private key is in correct hex format",
-      });
-    }
-
-    if (!/^[0-9a-f]{64}$/.test(publicKey)) {
-      throw new ValidationError("Invalid public key format", {
-        expectedFormat: "64 hex characters",
-        actualLength: publicKey.length,
-        suggestion: "Ensure public key is in correct hex format",
-      });
-    }
-
     return {
       secretKey: privateKey,
       publicKey: publicKey,
@@ -363,7 +339,13 @@ async function signTransaction(transaction, keyPair) {
         : JSON.stringify(transaction);
 
     try {
-      const signature = sign(transaction.hash, keyPair);
+      const password = "anshuman";
+      const signFn = kadenaSignWithKeyPair(
+        password,
+        keyPair.publicKey,
+        keyPair.secretKey
+      );
+      const signature = await signFn(transaction.hash);
       return signature;
     } catch (signError) {
       throw new TransactionError("Failed to sign transaction", {
@@ -635,25 +617,27 @@ async function getBalances(accountName, chainId = "2") {
 /**
  * Main baseline function that orchestrates the entire process
  */
-{ai-code}
+async function baselineFunction(event, context) {
+  // TODO: Implement routing logic based on event
+  // Example: event.action === 'getBalances', etc.
+  // For now, just return a placeholder
+  return {
+    statusCode: 200,
+    body: JSON.stringify({ message: 'Lambda is working!', event }),
+  };
+}
 
-const handler = async (event, context) => {
+export async function handler(event, context) {
   try {
-    const result = await baselineFunction();
-    return {
-      statusCode: 200,
-      body: JSON.stringify(result),
-    };
+    return await baselineFunction(event, context);
   } catch (error) {
-    console.error("Lambda Handler Error:", error);
     return {
-      statusCode: 500,
+      statusCode: error.code && typeof error.code === 'number' ? error.code : 500,
       body: JSON.stringify({
         error: error.message,
         details: error.details || {},
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
       }),
     };
   }
-};
-
-module.exports = { handler };
+}

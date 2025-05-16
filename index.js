@@ -4,6 +4,8 @@ const AWS = require('aws-sdk');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const AdmZip = require('adm-zip');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -39,36 +41,30 @@ app.post('/create-scheduled-lambda', async (req, res) => {
       ...(PUBLIC_KEY ? { PUBLIC_KEY } : {})
     };
 
-    // Create the Lambda function code
-    const functionCode = `
-exports.handler = async (event) => {
-  try {
-    ${code}
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ message: 'Function executed successfully' })
-    };
-  } catch (error) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: error.message })
-    };
-  }
-};`;
-
     // Create a zip file containing the Lambda function code
     const zip = new AdmZip();
-    zip.addFile('index.js', Buffer.from(functionCode));
-    const zipBuffer = zip.toBuffer();
+    const codeFolderPath = path.join(__dirname, 'code');
+    const files = fs.readdirSync(codeFolderPath);
+    for (const file of files) {
+      const filePath = path.join(codeFolderPath, file);
+      let fileContent = fs.readFileSync(filePath);
+      if (file === 'baseline.js') {
+        // Replace {ai-code} in baseline.js
+        let baselineJsContent = fileContent.toString();
+        baselineJsContent = baselineJsContent.replace('{ai-code}', code);
+        fileContent = Buffer.from(baselineJsContent);
+      }
+      zip.addFile(`code/${file}`, fileContent);
+    }
 
     // Create Lambda function
     const lambdaParams = {
       FunctionName: functionName,
       Runtime: 'nodejs18.x',
       Role: process.env.AWS_LAMBDA_ROLE_ARN,
-      Handler: 'index.handler',
+      Handler: 'code/baseline.handler',
       Code: {
-        ZipFile: zipBuffer
+        ZipFile: zip.toBuffer()
       },
       Timeout: 600, // 10 minutes in seconds
       MemorySize: 128,

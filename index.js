@@ -37,7 +37,7 @@ app.post('/create-scheduled-lambda', async (req, res) => {
       OPENAI_API_KEY: process.env.OPENAI_API_KEY,
       API_KEY: process.env.API_KEY,
       ...(env || {}),
-      ...(PRIVATE_KEY ? { PRIVATE_KEY } : {}),
+      ...(PRIVATE_KEY ? { PRIVATE_KEY: `"${PRIVATE_KEY}"` } : {}),
       ...(PUBLIC_KEY ? { PUBLIC_KEY } : {})
     };
 
